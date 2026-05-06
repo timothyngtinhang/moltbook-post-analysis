@@ -1,0 +1,22 @@
+# Local data
+data/*
+!data/.gitkeep
+
+exports/*
+!exports/.gitkeep
+
+old_data/*
+!old_data/.gitkeep
+
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
