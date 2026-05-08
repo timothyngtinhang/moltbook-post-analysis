@@ -17,7 +17,10 @@ from tag_json import (
 )
 from author_matrix import build_author_matrix
 from post_cov import compute_author_post_timing, post_cov_histogram_bins
-from author_tfidf import compute_author_post_tfidf_features
+from author_tfidf import (
+    compute_author_post_embedding_features,
+    compute_author_post_tfidf_features,
+)
 
 from author_post_performance import compute_author_post_performance
 from author_post_threshold import (
@@ -106,7 +109,7 @@ ax.set_ylabel("Posts")
 plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
 plt.savefig(OUTPUT_PLOT_DIR / 'submolt distribution.pdf',bbox_inches='tight')
-plt.show()
+plt.close()
 # %% calculate the behavioral sigiture (CoV, Similarity)
 author_post_timing = compute_author_post_timing(posts, min_posts=5)
 author_post_tfidf = compute_author_post_tfidf_features(
@@ -116,7 +119,18 @@ author_post_tfidf = compute_author_post_tfidf_features(
     cutoff=0.9,
     remove_near_duplicates=False,
 )
+author_post_embeddings = compute_author_post_embedding_features(
+    posts,
+    text_col="content",
+    min_posts=5,
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    batch_size=32,
+)
 print("Near-duplicate content removal setting: disabled")
+
+#%%
+author_post_embeddings
+author_post_tfidf
 
 #%% plot regularity CoV
 import matplotlib.pyplot as plt
@@ -181,7 +195,7 @@ ax.set_axisbelow(True)
 ax.set_ylim(0, cov_category.max() * 1.15)
 fig.tight_layout()
 fig.savefig(OUTPUT_PLOT_DIR / "post_timing_cov_classification.pdf", bbox_inches="tight")
-plt.show()
+plt.close(fig)
 #%% prepare data for GMM
 
 author_post_performance, author_submolt_performance, post_level_engagement = (
@@ -222,11 +236,21 @@ author_feature_matrix = build_author_matrix(
         author_post_timing,
         author_post_performance,
         author_post_tfidf,
+        author_post_embeddings,
     ],
     authors=authors,
 )
 
-GMM_prep = author_feature_matrix[['author_id', 'post_gap_cv', 'general_posts', 'non_general_posts', 'post_text_avg_cosine_similarity']]
+GMM_prep = author_feature_matrix[
+    [
+        "author_id",
+        "post_gap_cv",
+        "general_posts",
+        "non_general_posts",
+        "post_text_avg_embedding_cosine_similarity",
+        "post_text_avg_cosine_similarity",
+    ]
+]
 
 # %% plot GMM features
 import numpy as np
@@ -236,37 +260,38 @@ distribution_feature_names = {
     "post_gap_cv": "Post Timing Variability",
     "general_posts": "General Posts",
     "non_general_posts": "Non-General Posts",
-    "post_text_avg_cosine_similarity": "Average Post Text Similarity",
+    "post_text_avg_embedding_cosine_similarity": "Average Post Semantic Similarity",
 }
 
 fig = plot_4_distributions(GMM_prep, feature_names=distribution_feature_names)
 fig.savefig(OUTPUT_PLOT_DIR /'raw feature distributions.pdf', bbox_inches='tight')
-fig.show()
+plt.close(fig)
 #%% plot GMM log feature
 
 GMM_prep_transformed = GMM_prep[['author_id']].copy()
 GMM_prep_transformed['log_post_gap_cv'] = np.log1p(GMM_prep['post_gap_cv'])
 GMM_prep_transformed['log_non_general_posts'] = np.log1p(GMM_prep['non_general_posts'])
 GMM_prep_transformed['log_general_posts'] = np.log1p(GMM_prep['general_posts'])
-GMM_prep_transformed['post_text_avg_cosine_similarity'] = GMM_prep['post_text_avg_cosine_similarity']
+# GMM_prep_transformed['post_text_avg_cosine_similarity'] = GMM_prep['post_text_avg_cosine_similarity']
+GMM_prep_transformed['post_text_avg_embedding_cosine_similarity'] = GMM_prep['post_text_avg_embedding_cosine_similarity']
 
 transformed_distribution_feature_names = {
     "log_post_gap_cv": "Log Post Timing Variability",
     "log_non_general_posts": "Log Non-General Posts",
     "log_general_posts": "Log General Posts",
-    "post_text_avg_cosine_similarity": "Average Post Text Similarity",
+    "post_text_avg_embedding_cosine_similarity": "Average Post Semantic Similarity",
 }
 
 fig = plot_4_distributions(GMM_prep_transformed, feature_names=transformed_distribution_feature_names)
 fig.savefig(OUTPUT_PLOT_DIR /'transformed feature distributions.pdf', bbox_inches='tight')
-fig.show()
+plt.close(fig)
 # %% do GMM, find optimal K
 
 feature_cols = [
     "log_post_gap_cv",
     "log_non_general_posts",
     "log_general_posts",
-    "post_text_avg_cosine_similarity",
+    "post_text_avg_embedding_cosine_similarity",
 ]
 
 scaler = StandardScaler()
@@ -327,6 +352,7 @@ gmm_author_assignments = (
                 "log_non_general_posts",
                 "log_general_posts",
                 "post_text_avg_cosine_similarity",
+                "post_text_avg_embedding_cosine_similarity",
                 "cluster",
                 "cluster_confidence",
             ]
@@ -354,6 +380,7 @@ gmm_author_assignment_cols = [
     "general_posts",
     "non_general_posts",
     "post_text_avg_cosine_similarity",
+    "post_text_avg_embedding_cosine_similarity",
     "log_post_gap_cv",
     "log_general_posts",
     "log_non_general_posts",
@@ -380,15 +407,15 @@ gmm_cluster_summary = (
         mean_post_gap_cv=("post_gap_cv", "mean"),
         mean_general_posts=("general_posts", "mean"),
         mean_non_general_posts=("non_general_posts", "mean"),
-        mean_post_text_avg_cosine_similarity=(
-            "post_text_avg_cosine_similarity",
+        mean_post_text_avg_embedding_cosine_similarity=(
+            "post_text_avg_embedding_cosine_similarity",
             "mean",
         ),
         median_post_gap_cv=("post_gap_cv", "median"),
         median_general_posts=("general_posts", "median"),
         median_non_general_posts=("non_general_posts", "median"),
-        median_post_text_avg_cosine_similarity=(
-            "post_text_avg_cosine_similarity",
+        median_post_text_avg_embedding_cosine_similarity=(
+            "post_text_avg_embedding_cosine_similarity",
             "median",
         ),
         mean_author_posts=("author_posts", "mean"),
@@ -420,7 +447,7 @@ fig = plot_4_distributions(
     cluster_plot="contribution",
 )
 fig.savefig(OUTPUT_PLOT_DIR / 'contributions of cluster to features.pdf', bbox_inches='tight')
-fig.show()
+plt.close(fig)
 
 # %% plot BIC
 fig, ax = plt.subplots(figsize=(8, 5))
@@ -440,12 +467,12 @@ fig.tight_layout()
 fig.savefig(
     OUTPUT_PLOT_DIR / "GMM component BIC.pdf",
     bbox_inches="tight",)
-plt.show()
+plt.close(fig)
 
 
 #%% GMM summary
 gmm_asg = gmm_cluster_summary[['gmm_cluster', 'authors','median_post_gap_cv'
-,'mean_general_posts','mean_non_general_posts','median_post_text_avg_cosine_similarity', 'mean_post_score', 'median_post_score'
+,'mean_general_posts','mean_non_general_posts','median_post_text_avg_embedding_cosine_similarity', 'mean_post_score', 'median_post_score'
 ,'mean_total_unique_commenter_reach']].sort_values('gmm_cluster').reset_index(drop=True)
 
 gmm_latex = gmm_asg.set_index("gmm_cluster").T
@@ -455,4 +482,4 @@ gmm_latex.index.name = "Metric"
 print(gmm_latex.to_latex(float_format="%.2f"))
 
 
-
+# %%

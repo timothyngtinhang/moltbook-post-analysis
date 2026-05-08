@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
+from sentence_transformers import SentenceTransformer
 
 def _vectorize_texts(texts, **vectorizer_kwargs):
     vectorizer = TfidfVectorizer(**vectorizer_kwargs)
@@ -53,6 +53,33 @@ def avg_cosine_similarity(corpus, min_posts=5, **vectorizer_kwargs):
         return np.nan
 
     similarities = cosine_similarity(matrix)
+    upper_triangle = np.triu_indices_from(similarities, k=1)
+    pairwise_similarities = similarities[upper_triangle]
+    if len(pairwise_similarities) == 0:
+        return np.nan
+
+    return float(pairwise_similarities.mean())
+
+
+def avg_embedding_cosine_similarity(
+    corpus,
+    model,
+    min_posts=5,
+    batch_size=32,
+    show_progress_bar=False,
+):
+    texts = pd.Series(corpus).dropna().astype(str)
+    texts = texts[texts.str.strip().ne("")]
+    if len(texts) < min_posts:
+        return np.nan
+
+    embeddings = model.encode(
+        texts.tolist(),
+        batch_size=batch_size,
+        normalize_embeddings=True,
+        show_progress_bar=show_progress_bar,
+    )
+    similarities = cosine_similarity(embeddings)
     upper_triangle = np.triu_indices_from(similarities, k=1)
     pairwise_similarities = similarities[upper_triangle]
     if len(pairwise_similarities) == 0:
@@ -114,6 +141,56 @@ def compute_author_post_tfidf_features(
     features = (
         author_posts.groupby("author_id", dropna=False)[text_col]
         .apply(author_similarity_features)
+        .unstack()
+        .reset_index()
+    )
+
+    return features
+
+
+def compute_author_post_embedding_features(
+    posts,
+    text_col="title",
+    fallback_text_col=None,
+    min_posts=5,
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
+    batch_size=32,
+    show_progress_bar=False,
+):
+
+    input_cols = ["author_id", text_col]
+    if fallback_text_col is not None:
+        input_cols.append(fallback_text_col)
+
+    author_posts = posts[input_cols].dropna(subset=["author_id"]).copy()
+    author_posts[text_col] = author_posts[text_col].fillna("").astype(str)
+    if fallback_text_col is not None:
+        fallback_text = author_posts[fallback_text_col].fillna("").astype(str)
+        missing_text = author_posts[text_col].str.strip().eq("")
+        author_posts.loc[missing_text, text_col] = fallback_text[missing_text]
+
+    model = SentenceTransformer(model_name)
+
+    def author_embedding_features(texts):
+        original_texts = pd.Series(texts).dropna().astype(str)
+        original_texts = original_texts[original_texts.str.strip().ne("")]
+
+        return pd.Series(
+            {
+                "post_text_embedding_posts": len(original_texts),
+                "post_text_avg_embedding_cosine_similarity": avg_embedding_cosine_similarity(
+                    original_texts,
+                    model=model,
+                    min_posts=min_posts,
+                    batch_size=batch_size,
+                    show_progress_bar=show_progress_bar,
+                ),
+            }
+        )
+
+    features = (
+        author_posts.groupby("author_id", dropna=False)[text_col]
+        .apply(author_embedding_features)
         .unstack()
         .reset_index()
     )

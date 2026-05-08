@@ -86,5 +86,4 @@ def plot_4_distributions(
         axes[i].set_ylabel("Density")
 
     fig.tight_layout()
-    plt.show()
     return fig
