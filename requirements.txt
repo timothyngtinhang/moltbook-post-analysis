@@ -2,3 +2,5 @@ pandas
 jupyterlab
 matplotlib
 seaborn
+scikit-learn
+umap-learn

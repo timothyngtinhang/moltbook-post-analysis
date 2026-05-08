@@ -6,8 +6,14 @@ import numpy as np
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.mixture import GaussianMixture
+from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+try:
+    from umap import UMAP
+except ImportError:
+    UMAP = None
 
 from tag_json import (
     add_json_tags,
@@ -318,6 +324,70 @@ GMM_prep_transformed.loc[model_data.index, "cluster"] = clusters
 GMM_prep_transformed.loc[model_data.index, "cluster_confidence"] = cluster_probabilities.max(axis=1)
 GMM_prep_transformed["cluster"] = GMM_prep_transformed["cluster"].astype("Int64")
 
+# %% visualize cluster separability with 2D projections
+projection_data = pd.DataFrame(index=model_data.index)
+projection_data["cluster"] = clusters.astype(str)
+projection_data["cluster_confidence"] = cluster_probabilities.max(axis=1)
+
+pca = PCA(n_components=2, random_state=6740)
+pca_projection = pca.fit_transform(scaled_data)
+projection_data["pca_1"] = pca_projection[:, 0]
+projection_data["pca_2"] = pca_projection[:, 1]
+
+fig, ax = plt.subplots(figsize=(8, 6))
+sns.scatterplot(
+    data=projection_data,
+    x="pca_1",
+    y="pca_2",
+    hue="cluster",
+    size="cluster_confidence",
+    sizes=(20, 100),
+    alpha=0.75,
+    ax=ax,
+)
+ax.set_title("GMM Cluster Separability by PCA Projection")
+ax.set_xlabel(f"PC1 ({pca.explained_variance_ratio_[0]:.1%} variance)")
+ax.set_ylabel(f"PC2 ({pca.explained_variance_ratio_[1]:.1%} variance)")
+ax.legend(title="Cluster", bbox_to_anchor=(1.02, 1), loc="upper left")
+fig.tight_layout()
+fig.savefig(OUTPUT_PLOT_DIR / "GMM cluster PCA separability.pdf", bbox_inches="tight")
+fig.show()
+
+if UMAP is not None:
+    n_neighbors = min(15, len(scaled_data) - 1)
+    if n_neighbors >= 2:
+        umap_model = UMAP(
+            n_components=2,
+            n_neighbors=n_neighbors,
+            min_dist=0.1,
+            metric="euclidean",
+            random_state=6740,
+        )
+        umap_projection = umap_model.fit_transform(scaled_data)
+        projection_data["umap_1"] = umap_projection[:, 0]
+        projection_data["umap_2"] = umap_projection[:, 1]
+
+        fig, ax = plt.subplots(figsize=(8, 6))
+        sns.scatterplot(
+            data=projection_data,
+            x="umap_1",
+            y="umap_2",
+            hue="cluster",
+            size="cluster_confidence",
+            sizes=(20, 100),
+            alpha=0.75,
+            ax=ax,
+        )
+        ax.set_title("GMM Cluster Separability by UMAP Projection")
+        ax.set_xlabel("UMAP 1")
+        ax.set_ylabel("UMAP 2")
+        ax.legend(title="Cluster", bbox_to_anchor=(1.02, 1), loc="upper left")
+        fig.tight_layout()
+        fig.savefig(OUTPUT_PLOT_DIR / "GMM cluster UMAP separability.pdf", bbox_inches="tight")
+        fig.show()
+else:
+    print("Skipping UMAP separability plot because umap-learn is not installed.")
+
 gmm_author_assignments = (
     author_feature_matrix.merge(
         GMM_prep_transformed[
@@ -456,3 +526,4 @@ print(gmm_latex.to_latex(float_format="%.2f"))
 
 
 
+# %%
