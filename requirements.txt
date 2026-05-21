@@ -1,4 +1,6 @@
 pandas
+numpy
 jupyterlab
 matplotlib
 seaborn
+scikit-learn

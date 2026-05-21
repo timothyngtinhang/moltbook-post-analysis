@@ -29,7 +29,6 @@ from author_post_threshold import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = PROJECT_ROOT / "data" / "ready.db"
-RAW_DB_PATH = PROJECT_ROOT / "data" / "raw.db"
 OUTPUT_PLOT_DIR = OUTPUT_TABLE_DIR = PROJECT_ROOT / "outputs" / "tables"
 OUTPUT_TABLE_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_PLOT_DIR = PROJECT_ROOT / "outputs" / "plots"
@@ -50,13 +49,11 @@ with sqlite3.connect(DB_PATH) as conn:
         """,
         conn,
     )
-
-with sqlite3.connect(RAW_DB_PATH) as conn:
     post_submolts = pd.read_sql(
         """
         select
-            json_extract(raw_data, '$.post.id') as post_id,
-            json_extract(raw_data, '$.post.submolt.name') as submolt_name
+            id as post_id,
+            submolt_name
         from posts
         """,
         conn,
@@ -453,6 +450,3 @@ gmm_latex.columns = [f"gmm_cluster {col}" for col in gmm_latex.columns]
 gmm_latex.index.name = "Metric"
 
 print(gmm_latex.to_latex(float_format="%.2f"))
-
-
-
