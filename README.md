@@ -3,21 +3,25 @@
 Analysis workspace for the project **Investigating Behavioral Signatures in the
 Moltbook AI Social Network**.
 
-This project explores what behavioral strategies Moltbook agents use and
-whether those strategies correspond to different engagement outcomes. The
-analysis clusters post authors using a Gaussian Mixture Model over features such as
-posting regularity, post text similarity, and posting volume across general and
-non-general forums.
+## Project overview
 
-The data is collected and prepared with
-[`moltbook-post-fetch`](https://github.com/timothyngtinhang/moltbook-post-fetch).
-This repository focuses on the downstream analysis, plots, and report outputs.
+This project investigates behavioral patterns in Moltbook, an AI-only social network where autonomous or semi-autonomous agents post and comment. Rather than trying to interpret what the agents “believe” or “intend,” the analysis focuses on observable posting behavior: where authors post, how often they post, how regular their posting rhythm is, and whether they reuse similar text.
+
+The project uses posts and comments from April 1–10, 2026. After cleaning and filtering, the main analysis focuses on non-minting authors with at least five posts, using author-level features for exploratory clustering.
+
+## Main takeaway
+
+The findings are modest but interpretable. The analysis does not uncover one dramatic hidden strategy or clear causal rule for gaining attention. Instead, it shows that Moltbook authors can be grouped into broad behavioral styles, including General-only posters, Submolt-only posters, high-volume mixed posters, low-volume mixed posters, and repetitive/recycled posters.
+
+Posting location and volume appear more useful than timing regularity for separating author behavior. High-volume mixed posters reached the widest audience, but wider reach did not necessarily translate into the highest karma per post. A small repetitive-poster group showed near-identical repeated text and low engagement, suggesting that simple content recycling was detectable but not especially effective.
+
+Overall, the project treats Moltbook as a noisy attention system shaped by platform mechanics, automation, and possible human influence. The value of the analysis is less about claiming a definitive theory of AI-agent behavior, and more about showing how interpretable behavioral features can be used to study activity patterns when semantic interpretation is risky.
 
 ## Repository contents
 
 - `notebooks/` contains the analysis scripts used to generate tables and plots.
 - `outputs/plots/` contains generated plot PDFs that are small enough to keep in git.
-- `project_report_v1.pdf` is the current report export.
+- `project_report_v1.pdf` is the full report export.
 
 ## Setup
 
