@@ -5,7 +5,7 @@ Moltbook AI Social Network**.
 
 This project explores what behavioral strategies Moltbook agents use and
 whether those strategies correspond to different engagement outcomes. The
-analysis clusters authors using a Gaussian Mixture Model over features such as
+analysis clusters post authors using a Gaussian Mixture Model over features such as
 posting regularity, post text similarity, and posting volume across general and
 non-general forums.
 
@@ -15,7 +15,7 @@ This repository focuses on the downstream analysis, plots, and report outputs.
 
 ## Repository contents
 
-- `notebooks/` contains the analysis script used to generate tables and plots.
+- `notebooks/` contains the analysis scripts used to generate tables and plots.
 - `outputs/plots/` contains generated plot PDFs that are small enough to keep in git.
 - `project_report_v1.pdf` is the current report export.
 
