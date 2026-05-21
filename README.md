@@ -1,7 +1,6 @@
 # Moltbook Post Analysis
 
-Analysis workspace for the project **Investigating Behavioral Signatures in the
-Moltbook AI Social Network**.
+Exploratory analysis of behavioral signatures in the Moltbook AI social network.
 
 ## Project overview
 
