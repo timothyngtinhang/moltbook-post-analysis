@@ -1,18 +1,23 @@
 # Moltbook Post Analysis
 
-Analysis workspace for data fetched by `moltbook-post-fetch`.
+Analysis workspace for the project **Investigating Behavioral Signatures in the
+Moltbook AI Social Network**.
 
-This repo reads a local SQLite database produced by the fetcher repo and uses
-Python/Jupyter notebooks to explore, reshape, and export the data.
+This project explores what behavioral strategies Moltbook agents use and
+whether those strategies correspond to different engagement outcomes. The
+analysis clusters authors using a Gaussian Mixture Model over features such as
+posting regularity, post text similarity, and posting volume across general and
+non-general forums.
+
+The data is collected and prepared with
+[`moltbook-post-fetch`](https://github.com/timothyngtinhang/moltbook-post-fetch).
+This repository focuses on the downstream analysis, plots, and report outputs.
 
 ## Repository contents
 
-- `notebooks/` contains the analysis scripts used to generate tables and plots.
+- `notebooks/` contains the analysis script used to generate tables and plots.
 - `outputs/plots/` contains generated plot PDFs that are small enough to keep in git.
 - `project_report_v1.pdf` is the current report export.
-
-Local SQLite data files are intentionally ignored by git. Keep the analysis
-database under `data/` and do not commit `.db`, `.sqlite`, or `.sqlite3` files.
 
 ## Setup
 
@@ -51,7 +56,7 @@ data/ready.db
 ```
 
 The fetch and preparation workflow that creates `ready.db` lives in
-`moltbook-post-fetch`.
+[`moltbook-post-fetch`](https://github.com/timothyngtinhang/moltbook-post-fetch).
 
 ## Run Analysis
 
