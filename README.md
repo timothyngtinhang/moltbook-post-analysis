@@ -35,20 +35,6 @@ python3 -m pip install -r requirements.txt
 SQLite database files are not committed to this repository because they are too
 large for git. You may download the source file from [Kaggle](https://www.kaggle.com/datasets/timothyngtinhang/moltbook-posts-and-comments-april-110-2026).
 
-With the Kaggle CLI configured, you may download and unzip the dataset with:
-
-```bash
-cd moltbook-post-analysis
-mkdir -p data
-kaggle datasets download \
-  -d timothyngtinhang/moltbook-posts-and-comments-april-110-2026 \
-  -p data \
-  --unzip
-```
-
-To use the Kaggle CLI, install it and create an API token from your Kaggle
-account settings. Kaggle expects the token at `~/.kaggle/kaggle.json`.
-
 After downloading, confirm the file is available at:
 
 ```text
