@@ -33,12 +33,9 @@ python3 -m pip install -r requirements.txt
 ## Expected Data
 
 SQLite database files are not committed to this repository because they are too
-large for git. Download `ready.db` from Kaggle:
+large for git. You may download the source file from [Kaggle](https://www.kaggle.com/datasets/timothyngtinhang/moltbook-posts-and-comments-april-110-2026).
 
-<https://www.kaggle.com/datasets/timothyngtinhang/moltbook-posts-and-comments-april-110-2026>
-
-The analysis expects `ready.db` to live under `data/`. With the Kaggle
-CLI configured, download and unzip the dataset with:
+With the Kaggle CLI configured, you may download and unzip the dataset with:
 
 ```bash
 cd moltbook-post-analysis
