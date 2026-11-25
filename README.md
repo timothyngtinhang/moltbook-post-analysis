@@ -1,28 +1,37 @@
 # Moltbook Post Analysis
 
-Exploratory analysis of behavioral signatures in the Moltbook AI social network.
+A Python project exploring how accounts on Moltbook, a social platform for AI agents, post and receive comments.
 
-## Project overview
+I wanted to see whether simple measures of posting activity could reveal useful patterns: how often accounts post, which communities they use, how regular their posting intervals are, and how much text they repeat.
 
-This project investigates behavioral patterns in Moltbook, an AI-only social network where autonomous or semi-autonomous agents post and comment. Rather than trying to interpret what the agents “believe” or “intend,” the analysis focuses on observable posting behavior: where authors post, how often they post, how regular their posting rhythm is, and whether they reuse similar text.
+The data covers posts from April 1–10, 2026, with comments retained within two days of each post. The clustering analysis uses authors with at least five posts after filtering out mint-transaction notes.
 
-The project uses posts and comments from April 1–10, 2026. After cleaning and filtering, the main analysis focuses on non-minting authors with at least five posts, using author-level features for exploratory clustering.
+## What I built
 
-## Main takeaway
+- A data preparation and collection workflow in the companion [moltbook-post-fetch](https://github.com/timothyngtinhang/moltbook-post-fetch) repository, using Python and SQLite.
+- Author-level features for posting volume, use of General versus other communities, variation in posting intervals, and average TF-IDF cosine similarity between posts.
+- Gaussian mixture clustering on four features, with log transforms for posting counts and interval variability, followed by standardization.
+- Plots and summaries comparing the groups' posting patterns, post scores, and numbers of distinct commenters.
 
-The findings are modest but interpretable. The analysis does not uncover one dramatic hidden strategy or clear causal rule for gaining attention. Instead, it shows that Moltbook authors can be grouped into broad behavioral styles, including General-only posters, Submolt-only posters, high-volume mixed posters, low-volume mixed posters, and repetitive/recycled posters.
+## What I found
 
-Posting location and volume appear more useful than timing regularity for separating author behavior. High-volume mixed posters reached the widest audience, but wider reach did not necessarily translate into the highest karma per post. A small repetitive-poster group showed near-identical repeated text and low engagement, suggesting that simple content recycling was detectable but not especially effective.
+The five-group analysis separated accounts into broad patterns: General-only posters, posters using other communities, high- and low-volume mixed posters, and a small group with highly repetitive text.
 
-Overall, the project treats Moltbook as a noisy attention system shaped by platform mechanics, automation, and possible human influence. The value of the analysis is less about claiming a definitive theory of AI-agent behavior, and more about showing how interpretable behavioral features can be used to study activity patterns when semantic interpretation is risky.
+High-volume mixed posters had the largest unique commenter reach in the analysis. The repetitive group had low observed engagement. These are descriptions of this sample; they do not show that a particular posting strategy causes better or worse engagement.
 
-## Repository contents
+Here, **unique commenter reach** means the number of distinct other accounts that commented on an author's posts. It does not measure views or everyone who saw a post.
 
-- `notebooks/` contains the analysis scripts used to generate tables and plots.
-- `outputs/plots/` contains generated plot PDFs that are small enough to keep in git.
-- `project_report_v1.pdf` is the full report export.
+## Limits
 
-## Setup
+This is a short snapshot of active accounts, not a representative sample of all Moltbook users. Accounts with fewer than five retained posts are excluded from clustering, and the cleaning step removes deleted content and deleted authors.
+
+The current model uses **five components**. The script compares BIC across one to ten components, but then fixes the final count at five; it should not be read as an automatically BIC-selected result. Cluster labels are interpretations of the fitted groups, rather than verified account types.
+
+The script also calculates account karma divided by sampled post count. Because account karma and the sampled posts can cover different periods, I would not use that ratio as a measure of karma earned per post in this study.
+
+## Run the analysis
+
+Requires Python and the packages in `requirements.txt`.
 
 ```bash
 python3 -m venv .venv
@@ -30,26 +39,20 @@ source .venv/bin/activate
 python3 -m pip install -r requirements.txt
 ```
 
-## Expected Data
+Download the SQLite dataset from [Kaggle](https://www.kaggle.com/datasets/timothyngtinhang/moltbook-posts-and-comments-april-110-2026) and place it at `data/ready.db`. Database files are not included in this repository.
 
-SQLite database files are not committed to this repository because they are too
-large for git. You may download the source file from [Kaggle](https://www.kaggle.com/datasets/timothyngtinhang/moltbook-posts-and-comments-april-110-2026).
-
-After downloading, confirm the file is available at:
-
-```text
-data/ready.db
-```
-
-The fetch and preparation workflow that creates `ready.db` lives in
-[`moltbook-post-fetch`](https://github.com/timothyngtinhang/moltbook-post-fetch).
-
-## Run Analysis
-
-The main analysis script expects `data/ready.db` to exist:
+Then run from the repository root:
 
 ```bash
 python notebooks/main_script.py
 ```
 
-Generated plots are written to `outputs/plots/`. 
+Plots are written to `outputs/plots/`. The collection and preparation scripts are in [moltbook-post-fetch](https://github.com/timothyngtinhang/moltbook-post-fetch).
+
+## Files
+
+| Path | Contents |
+| --- | --- |
+| `notebooks/` | Python analysis scripts |
+| `outputs/plots/` | Exported plots |
+| [project_report_v1.pdf](project_report_v1.pdf) | Original project report |
